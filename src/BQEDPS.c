@@ -26,6 +26,14 @@ char *FONT_1 = "assets/fonts/font_1.ttf";
 char *FONT_2 = "assets/fonts/font_2.ttf";
 char *FONT_3 = "assets/fonts/font_3.ttf";
 
+
+
+float DF = 0.1f;
+float IF = 2.0f;
+float TS = 4.0f;
+int VN = 4;
+
+
 int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -88,7 +96,8 @@ int main(int argc, char* argv[]) {
     Uint32 startTime = SDL_GetTicks();
     float fps = 0;
     int frameCount = 0;
-    char debugText[32];
+    char debugText[256];
+
 
 
 
@@ -117,6 +126,30 @@ int main(int argc, char* argv[]) {
                     case SDLK_g:
                         drawCircle(rand()%GRID_WIDTH,rand()%GRID_HEIGHT,10,getColorFromPotential(1.0f), pixels);
                         break;
+                    case SDLK_u:
+                        DF += 0.1f;
+                        break;
+                    case SDLK_j:
+                        DF -= 0.1f;
+                        break;
+                    case SDLK_i:
+                        IF += 0.1f;
+                        break;
+                    case SDLK_k:
+                        IF -= 0.1f;
+                        break;
+                    case SDLK_o:
+                        TS += 0.1f;
+                        break;
+                    case SDLK_l:
+                        TS -= 0.1f;
+                        break;
+                    case SDLK_p:
+                        VN += 0.1f;
+                        break;
+                    case SDLK_m:
+                        VN -= 0.1f;
+                        break;
                 }
             }
         }
@@ -137,7 +170,8 @@ int main(int argc, char* argv[]) {
                 frameCount = 0;
             }
 
-            snprintf(debugText, sizeof(debugText), "FPS: %.2f", fps);
+            //snprintf(debugText, sizeof(debugText), "FPS: %.2f", fps);
+            snprintf(debugText, sizeof(debugText), "FPS: %.1f, DF %.1f IF %.1f TS %.1f VN %d", fps, DF, IF, TS, VN);
 
             renderText(debugText, 16, FONT_1, green, 1, 1, pixels);
         }

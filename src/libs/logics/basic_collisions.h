@@ -83,6 +83,12 @@ float median_surrounding_ratio(unsigned int* pixels, int x, int y) {
 
 
 
+extern float DF;
+extern float IF;
+extern float TS;
+extern int VN;
+
+
 
 
 
@@ -152,10 +158,16 @@ void handleVoidPotential (unsigned int* pixels) {
 
 
 
-                float dampingFactor = 0.1f;
-                float influenceFactor = 2.0f;
-                float totalSurrounding = 4.0f;
-                int validNeighbors = 4;
+                // float dampingFactor = 0.1f;
+                // float influenceFactor = 2.0f;
+                // float totalSurrounding = 4.0f;
+                // int validNeighbors = 4;
+
+
+                float dampingFactor = DF;
+                float influenceFactor = IF;
+                float totalSurrounding = TS;
+                int validNeighbors = VN;
 
                 // Traverse the 8 surrounding pixels
                 for (int dy = -1; dy <= 1; ++dy) {
