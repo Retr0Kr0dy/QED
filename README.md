@@ -2,7 +2,7 @@
 
 Studuying QED and simulating things
 
-SDL x OpenGL engine
+SDL x OpenGL engine (based on mire project).
 
 ## Requirements
 
@@ -17,5 +17,15 @@ sudo apt install libsdl2-dev -y
 Currently, simply build with :
 
 ```sh
-make && BQEDPS
+make && ./BQEDPS
 ```
+
+## Usage
+
+|Key|Action|
+|-|-|
+|f1|Enable/disable debug info.|
+|q|Quit.|
+|f|Create noise.|
+|g|Create a charged circle (1.0f) at random position.|
+
