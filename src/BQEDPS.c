@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include <time.h>
 
 #include "libs/entities.h"
@@ -114,7 +115,7 @@ int main(int argc, char* argv[]) {
                         drawPotMir(pixels);
                         break;
                     case SDLK_g:
-                        drawCircle(50,50,10,getColorFromPotential(1.0f), pixels);
+                        drawCircle(rand()%GRID_WIDTH,rand()%GRID_HEIGHT,10,getColorFromPotential(1.0f), pixels);
                         break;
                 }
             }

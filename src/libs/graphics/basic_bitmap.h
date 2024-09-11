@@ -65,14 +65,6 @@ void drawCircle(int centerX, int centerY, int radius, Uint32 color, unsigned int
 }
 
 
-// Function to draw a pixel in the pixels array
-void drawElectron(unsigned int* pixels, struct electron elec) {
-    drawCircle(elec.posX, elec.posY, ELEMENT_SIZE, SDcolor2uint32(red), pixels);
-}
-
-
-
-
 
 void renderText(const char* text, int CHAR_SIZE , char *font_name, SDL_Color color, int x, int y, unsigned int* pixels) {
     // Load font

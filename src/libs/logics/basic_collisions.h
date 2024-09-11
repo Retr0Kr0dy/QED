@@ -6,73 +6,19 @@ extern int GRID_HEIGHT;
 
 extern struct voidness voidness_list[256 * 240];
 
-// void handleEntityLogic (struct electron *Character) {
-//     // Character->posX = Character->posX + Character->velX;
-//     // Character->posY = Character->posY + Character->velY;
-//     Character->posX = Character->posX + Character->velX;
-//     Character->posY = Character->posY + Character->velY;
-
-//     if (Character->posX < 0) {Character->posX + 1;}
-//     if (Character->posX > SCREEN_WIDTH) {Character->posX - 1;}
-//     if (Character->posY < 0) {Character->posX + 1;}
-//     if (Character->posY > SCREEN_HEIGHT) {Character->posX - 1;}
-// }
-
-
-// unsigned int getColorFromPotential(float ratio) {
-//     if (ratio < 0.0f) {
-//         ratio = 0.0f;
-//     } else if (ratio > 1.0f) {
-//         ratio = 1.0f;
-//     }
-
-//     uint8_t R = (uint8_t)(ratio * 255);          
-//     uint8_t G = 0;                               
-//     uint8_t B = (uint8_t)((1.0f - ratio) * 255); 
-
-//     unsigned int color = (0xFF << 24) | (R << 16) | (G << 8) | B;
-
-//     return color;
-// }
-
-
-
-
-// unsigned int getColorFromPotential(float potential) {
-//     // Assumes potential is between 0 and 1. Adjust accordingly if it's not:
-//     int r = (int)(potential * 255);  // maps to [0, 255]
-//     int b = 255 - r;                 // simple gradient
-//     return (r << 16) | (0 << 8) | b; // Color format (RGB)
-// }
-
 unsigned int getColorFromPotential(float ratio) {
-    // Clamp the value to the range [0.0, 1.0]
     if (ratio < 0.0f) {
         ratio = 0.0f;
     } else if (ratio > 1.0f) {
         ratio = 1.0f;
     }
 
-    // Calculate the RGB components
     unsigned int red = (unsigned int)(ratio * 255.0f);   // 0.0 -> 0, 1.0 -> 255
     unsigned int green = 0;                                 // Always 0
     unsigned int blue = (unsigned int)((1.0f - ratio) * 255.0f); // 0.0 -> 255, 1.0 -> 0
 
-    // Convert to unsigned int (assuming little-endian color format)
     return (red << 16) | (green << 8) | blue;
 }
-
-
-// // Helper function to calculate ratio from pixel (already defined)
-// float gradient_ratio(unsigned int pixel) {
-//     uint8_t R = (pixel >> 16) & 0xFF; // Red component
-//     uint8_t G = (pixel >> 8) & 0xFF;  // Green component
-//     uint8_t B = pixel & 0xFF;         // Blue component
-//     float maxColor = (float)(R + B);
-//     if (maxColor == 0.0f) return 0.0f; // Handle case of no red/blue
-
-//     return (float)R / maxColor; // Calculate ratio
-// }
 
 float gradient_ratio(unsigned int pixel) {
     uint8_t R = (pixel >> 16) & 0xFF; // comment about R extraction 
@@ -141,11 +87,13 @@ float median_surrounding_ratio(unsigned int* pixels, int x, int y) {
 
 
 
-float dampling_factor = 100.0f;
+
+
+
+
+
 
 void handleVoidPotential (unsigned int* pixels) {
-    unsigned int new_pixels[GRID_WIDTH * GRID_HEIGHT];
-
     // get info on map
 
     for (int y=0; y < GRID_HEIGHT; ++y ) {
@@ -169,48 +117,95 @@ void handleVoidPotential (unsigned int* pixels) {
             if (point.surrounding != 0.0f) {
                 //unsigned int color = getColorFromPotential(point.potential*point.surrounding/2);
 //                unsigned int color = getColorFromPotential((point.potential + (point.surrounding * dampling_factor)) / (1.0f + dampling_factor));
-/*
-                // Define a suitable damping and influence factor
-                float dampingFactor = 0.01f;
+
+                // // Define a suitable damping and influence factor
+                // float dampingFactor = 0.01f;
+                // float influenceFactor = 2.0f;
+
+
+
+                // // Calculate the weighted contribution from surrounding pixels
+                // // Assuming you have access to surrounding pixels (left, right, above, below)
+                // float totalSurrounding = point.surrounding*8;
+                // float neighborCount = 8.0; // Number of surrounding neighbors considered
+
+                // // More sophisticated averaging
+                // float newPotential = (point.potential + (totalSurrounding / neighborCount) * influenceFactor) / (1.0f + influenceFactor);
+
+                // // Apply exponential damping based on the current potential
+                // newPotential *= exp(-dampingFactor * newPotential); // Exponential decay
+
+                // // Clamp new potential to the range [0.0, 1.0]
+                // newPotential = fmax(0.0f, fmin(newPotential, 1.0f)); // Clamping syntax
+
+                // // Update the color based on new potential
+                // unsigned int color = getColorFromPotential(newPotential);
+
+                // pixels[y*GRID_WIDTH+x] = color;
+
+
+
+
+
+
+
+
+
+
+                float dampingFactor = 0.1f;
                 float influenceFactor = 2.0f;
+                float totalSurrounding = 4.0f;
+                int validNeighbors = 4;
 
-                // Updating potential with adjusted factors
-                float newPotential = (point.potential + (point.surrounding * influenceFactor)) / (1.0f + influenceFactor);
+                // Traverse the 8 surrounding pixels
+                for (int dy = -1; dy <= 1; ++dy) {
+                    for (int dx = -1; dx <= 1; ++dx) {
+                        if (dy == 0 && dx == 0) continue; // Skip the central pixel
+                        int newX = x + dx;
+                        int newY = y + dy;
+                        if (newX >= 0 && newX < GRID_WIDTH && newY >= 0 && newY < GRID_HEIGHT) {
+                            struct voidness neighbor = voidness_list[newY * GRID_WIDTH + newX];
+                            totalSurrounding += neighbor.potential;
+                            validNeighbors++;
+                        }
+                    }
+                }
 
-                // Optional: Apply damping to the new potential
-                newPotential *= (1.0f - dampingFactor);
+                // Update the potential influenced by surrounding pixels
+                if (validNeighbors > 0) {
+                    float averageSurrounding = totalSurrounding / validNeighbors;
+                    float newPotential = point.potential + (averageSurrounding - point.potential) * influenceFactor;
 
-                // Clamp new potential to the range [0.0, 1.0]
-                if (newPotential < 0.0f) newPotential = 0.0f;
-                if (newPotential > 1.0f) newPotential = 1.0f;
+                    // Apply damping to reduce sharp changes
+                    newPotential *= exp(-dampingFactor);
 
-                // Update the color based on new potential
+                    // Clamp new potential to the range [0.0, 1.0]
+                    newPotential = fmax(0.0f, fmin(newPotential, 1.0f)); 
+                    
+                    // Update the color based on new potential
+                    unsigned int color = getColorFromPotential(newPotential);
+                    pixels[y * GRID_WIDTH + x] = color;
 
-                unsigned int color = getColorFromPotential(newPotential);
-*/
-                // Define a suitable damping and influence factor
-                float dampingFactor = 0.01f;
-                float influenceFactor = 2.0f;
+                    // Update the point's potential for next iteration
+                    point.potential = newPotential;
 
-                // Calculate the weighted contribution from surrounding pixels
-                // Assuming you have access to surrounding pixels (left, right, above, below)
-                float totalSurrounding = point.surrounding*8;
-                float neighborCount = 8.0; // Number of surrounding neighbors considered
 
-                // More sophisticated averaging
-                float newPotential = (point.potential + (totalSurrounding / neighborCount) * influenceFactor) / (1.0f + influenceFactor);
 
-                // Apply exponential damping based on the current potential
-                newPotential *= exp(-dampingFactor * newPotential); // Exponential decay
 
-                // Clamp new potential to the range [0.0, 1.0]
-                newPotential = fmax(0.0f, fmin(newPotential, 1.0f)); // Clamping syntax
 
-                // Update the color based on new potential
-                unsigned int color = getColorFromPotential(newPotential);
 
-                pixels[y*GRID_WIDTH+x] = color;            
-            }
+
+
+
+
+
+
+
+
+
+
+
+            }}
         }
     }
 
