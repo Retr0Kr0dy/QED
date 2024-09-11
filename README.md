@@ -28,4 +28,11 @@ make && ./BQEDPS
 |q|Quit.|
 |f|Create noise.|
 |g|Create a charged circle (1.0f) at random position.|
-
+|u|Increase damping factor.|
+|j|Decrease damping factor.|
+|i|Increase influence factor.|
+|k|Decrease influence factor.|
+|o|Increase total surrounding.|
+|l|Decrease total surrounding.|
+|p|Increase valid neighbors.|
+|m|Decrease valid neighbors.|
