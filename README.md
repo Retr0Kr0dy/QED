@@ -5,7 +5,7 @@ Studuying QED and simulating things
 SDL x OpenGL engine (based on mire project).
 
 
-![Alt text](https://github.com/Retr0Kr0dy/QED/blob/main/demo.gif)
+![Alt text](https://github.com/Retr0Kr0dy/QED/blob/v0.1.0/demo.gif)
 
 
 ## Requirements
