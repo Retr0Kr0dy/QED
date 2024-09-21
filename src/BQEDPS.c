@@ -35,6 +35,11 @@ int VN = 4;
 
 
 int main(int argc, char* argv[]) {
+    if (argc < 1) {
+        printf("Bad usage: %s <none> ...\n", argv[0]);
+        return 1;
+    }
+
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -92,16 +97,24 @@ int main(int argc, char* argv[]) {
     int debug = 0;
     int pause = 0;
 
+
+    float timeRatio = 1;
+    int numElectrons = 0;
+
     SDL_Event event;
     Uint32 startTime = SDL_GetTicks();
+    //Uint32 origStartTime = startTime;
     float fps = 0;
     int frameCount = 0;
     char debugText[256];
+    //char debugText2[256];
 
 
+    // Initialize the grid
+    initializeVoidnessGrid(grid);
 
-
-    drawPotMir(pixels);
+    addElectrons(numElectrons, GRID_WIDTH/2,  GRID_HEIGHT/2, 1.0f, 0.0f, 0.0f, 5.0f);
+//    drawPotMir(pixels);
 
 
     while (running) {
@@ -120,50 +133,66 @@ int main(int argc, char* argv[]) {
                     case SDLK_F2:
                         pause ^= 1;
                         break;
+                    case SDLK_r:
+                        resetGrid(grid);
+                        break;
+                    case SDLK_a:
+                        addElectrons(numElectrons+1, 1.0f * (rand()%GRID_WIDTH),  1.0f * (rand()%GRID_HEIGHT), 0.70f, 1.0f, 1.0f, 0.0f);
+                        numElectrons++;
+                        break;
+                    case SDLK_e:
+                        applyInitialPerturbation(&electrons[0], 1.0f, 1.0f);
+                        break;
                     case SDLK_f:
-                        drawPotMir(pixels);
+                        applyPerturbation(grid,GRID_WIDTH/3,GRID_HEIGHT/3,0.99f,0.0f);
                         break;
                     case SDLK_g:
-                        drawCircle(rand()%GRID_WIDTH,rand()%GRID_HEIGHT,10,getColorFromPotential(1.0f), pixels);
+                        applyPerturbation(grid,(GRID_WIDTH/2)+5,(GRID_HEIGHT/2)+3,0.0f,0.99f);
                         break;
-                    case SDLK_u:
-                        DF += 0.1f;
-                        break;
-                    case SDLK_j:
-                        DF -= 0.1f;
+                    case SDLK_h:
+                        int x,y;
+                        x = rand()%GRID_WIDTH;
+                        y = rand()%GRID_HEIGHT;
+                        grid[y * GRID_WIDTH + x].Ex = 1.00f;  // Initial pulse in the x-direction
+                        grid[y * GRID_WIDTH + x].Ey = 1.0f;  // Initial pulse in the y-direction
+                        grid[y * GRID_WIDTH + x].Bz = 0.0f;  // Start with no magnetic field
                         break;
                     case SDLK_i:
-                        IF += 0.1f;
+                        // timeRatio += 0.1f;
+                        timeRatio *= 10;
                         break;
                     case SDLK_k:
-                        IF -= 0.1f;
-                        break;
-                    case SDLK_o:
-                        TS += 0.1f;
-                        break;
-                    case SDLK_l:
-                        TS -= 0.1f;
-                        break;
-                    case SDLK_p:
-                        VN += 0.1f;
-                        break;
-                    case SDLK_m:
-                        VN -= 0.1f;
+                        timeRatio /= 10;
                         break;
                 }
             }
         }
 
+        //Uint32 origElapsedTime = SDL_GetTicks() - origStartTime;
+        //(float) origElapsedTime / timeRatio
 
         if (!pause) {
-            handleVoidPotential(pixels);
+           handleVoidness(pixels, timeRatio, numElectrons+1);
+           
+           
+            //handleVoidPotential(pixels);
         }
 
 
+
+
+
+        // Creating temp buffer for rendring
+        unsigned int* tempPixels = (unsigned int*)malloc(GRID_WIDTH * GRID_HEIGHT * sizeof(unsigned int));
+
+        for (int i = 0; i < GRID_HEIGHT * GRID_WIDTH; i++) {
+            tempPixels[i] = pixels[i];
+        }
+
         if (debug) {
+            Uint32 elapsedTime = SDL_GetTicks() - startTime;
             // Calculate FPS
             frameCount++;
-            Uint32 elapsedTime = SDL_GetTicks() - startTime;
             if (elapsedTime >= 1000) {
                 fps = frameCount / (elapsedTime / 1000.0f);
                 startTime = SDL_GetTicks();
@@ -171,15 +200,15 @@ int main(int argc, char* argv[]) {
             }
 
             //snprintf(debugText, sizeof(debugText), "FPS: %.2f", fps);
-            snprintf(debugText, sizeof(debugText), "FPS: %.1f, DF %.1f IF %.1f TS %.1f VN %d", fps, DF, IF, TS, VN);
-
-            renderText(debugText, 16, FONT_1, green, 1, 1, pixels);
+            snprintf(debugText, sizeof(debugText), "FPS: %.1f, Time ratio %.10f", fps, timeRatio);
+            
+            renderText(debugText, 16, FONT_1, green, 1, 1, tempPixels);
         }
 
 
         // Update the texture with the new pixel buffer
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GRID_WIDTH, GRID_HEIGHT, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GRID_WIDTH, GRID_HEIGHT, 0, GL_BGRA, GL_UNSIGNED_BYTE, tempPixels);
 
         // Clear the screen and render the texture
         glClear(GL_COLOR_BUFFER_BIT);
