@@ -107,17 +107,10 @@ void handleVoidness(unsigned int *array, float dt, int numElectrons) {
         newElectrons[i].vy = electrons[i].vy;
     }
 
-    // Step 1: Apply perturbations from each electron
-    // Step 2: Update the electric and magnetic fields
-
-
 
     // Constants for the simulation
-    const float ke = 8.99e9f; // Coulomb's constant (in vacuum)
-    const float maxInfluenceRadius = 256.0f; // Limit interaction radius for performance reasons
-
-
-
+    // const float ke = 8.99e9f; // Coulomb's constant (in vacuum)
+    // const float maxInfluenceRadius = 256.0f; // Limit interaction radius for performance reasons
 
     // // Step 1: Calculate electron movement and update positions
     // for (int i = 0; i < numElectrons; i++) {
@@ -178,7 +171,68 @@ void handleVoidness(unsigned int *array, float dt, int numElectrons) {
     //             newGrid[neighborIdx].chargeDensity += newElectrons[i].charge / (distanceSquared);
     //         }
     //     }
+
+    //     // Step 1b: Apply Lorentz force to update electron velocity
+    //     int electronIdx = (int)newElectrons[i].posY * GRID_WIDTH + (int)newElectrons[i].posX;
+    //     // Get the local fields at the electron's position
+    //     float Ex = newGrid[electronIdx].Ex;
+    //     float Ey = newGrid[electronIdx].Ey;
+    //     float Bz = newGrid[electronIdx].Bz;
+
+    //     // Lorentz force: F = q(E + v × B)
+    //     // Update velocity due to electric field: a_x = (q / m) * Ex, a_y = (q / m) * Ey
+    //     // For simplicity, assume mass m = 1
+    //     newElectrons[i].vx += (newElectrons[i].charge * Ex) * dt;
+    //     newElectrons[i].vy += (newElectrons[i].charge * Ey) * dt;
+
+    //     // Update velocity due to magnetic field: |v_x'| = |v_y * Bz|, |v_y'| = |v_x * Bz|
+    //     float lorentzForceX = fabs(newElectrons[i].vy) * fabs(Bz); // Take absolute value for force calculation
+    //     float lorentzForceY = fabs(newElectrons[i].vx) * fabs(Bz); // Same for vy
+
+    //     // Apply Lorentz force while preserving the original velocity signs
+    //     newElectrons[i].vx += (newElectrons[i].vx < 0 ? -lorentzForceX : lorentzForceX) * dt;
+    //     newElectrons[i].vy += (newElectrons[i].vy < 0 ? -lorentzForceY : lorentzForceY) * dt;
     // }
+
+    // // Step 2: Calculate electromagnetic field propagation using Maxwell's equations
+    // for (int y = 1; y < GRID_HEIGHT - 1; y++) {
+    //     for (int x = 1; x < GRID_WIDTH - 1; x++) {
+    //         int idx = y * GRID_WIDTH + x;
+    //         int idxUp = (y + 1) * GRID_WIDTH + x;
+    //         int idxDown = (y - 1) * GRID_WIDTH + x;
+    //         int idxLeft = y * GRID_WIDTH + (x - 1);
+    //         int idxRight = y * GRID_WIDTH + (x + 1);
+
+    //         // Faraday's Law: ∇ × E = -∂B/∂t (updates electric field based on magnetic field)
+    //         float dBz_dx = (grid[idxRight].Bz - grid[idxLeft].Bz) / (2 * GRID_WIDTH);  // Approximate ∂Bz/∂x
+    //         float dBz_dy = (grid[idxUp].Bz - grid[idxDown].Bz) / (2 * GRID_WIDTH);     // Approximate ∂Bz/∂y
+
+    //         newGrid[idx].Ex += dt * grid[idx].mu * dBz_dy;
+    //         newGrid[idx].Ey += dt * grid[idx].mu * (-dBz_dx);
+
+    //         // Ampère's Law: ∇ × B = μ₀ (J + ε₀ ∂E/∂t) (updates magnetic field based on electric field)
+    //         float dEy_dx = (grid[idxRight].Ey - grid[idxLeft].Ey) / (2 * GRID_WIDTH);  // Approximate ∂Ey/∂x
+    //         float dEx_dy = (grid[idxUp].Ex - grid[idxDown].Ex) / (2 * GRID_WIDTH);     // Approximate ∂Ex/∂y
+
+    //         newGrid[idx].Bz += dt * (dEy_dx - dEx_dy) / grid[idx].epsilon;
+    //     }
+    // }
+
+
+
+
+
+
+
+
+
+
+  // Constants for the simulation
+    const float ke = 8.99e9f;  // Coulomb's constant
+    const float gamma = 0.01f;  // Damping factor for electric fields
+    const float eta = 0.01f;  // Damping factor for magnetic fields
+    const float maxFieldMagnitude = 1e6f; // Limit for field values
+    const float maxInfluenceRadius = 10.0f;
 
     // Step 1: Calculate electron movement and update positions
     for (int i = 0; i < numElectrons; i++) {
@@ -186,83 +240,64 @@ void handleVoidness(unsigned int *array, float dt, int numElectrons) {
         newElectrons[i].posX += newElectrons[i].vx * dt;
         newElectrons[i].posY += newElectrons[i].vy * dt;
 
-        // Make sure electrons stay within bounds (simple boundary condition)
+        // Boundary conditions
         if (newElectrons[i].posX < 0) newElectrons[i].posX = 0;
         if (newElectrons[i].posX >= GRID_WIDTH) newElectrons[i].posX = GRID_WIDTH - 1;
         if (newElectrons[i].posY < 0) newElectrons[i].posY = 0;
         if (newElectrons[i].posY >= GRID_HEIGHT) newElectrons[i].posY = GRID_HEIGHT - 1;
 
-        // For each electron, calculate its influence on the surrounding grid points based on Coulomb's Law
         int gridX = (int)newElectrons[i].posX;
         int gridY = (int)newElectrons[i].posY;
 
-        // Loop over nearby grid points within the maxInfluenceRadius
+        // Influence nearby grid points
         for (int offsetY = -maxInfluenceRadius; offsetY <= maxInfluenceRadius; offsetY++) {
             for (int offsetX = -maxInfluenceRadius; offsetX <= maxInfluenceRadius; offsetX++) {
                 int neighborX = gridX + offsetX;
                 int neighborY = gridY + offsetY;
 
-                // Ensure the neighbor point is within the grid bounds
+                // Ensure within bounds
                 if (neighborX < 0 || neighborX >= GRID_WIDTH || neighborY < 0 || neighborY >= GRID_HEIGHT) {
                     continue;
                 }
 
-                // Calculate the distance from the electron to the grid point
                 float dx = neighborX - newElectrons[i].posX;
                 float dy = neighborY - newElectrons[i].posY;
                 float distanceSquared = dx * dx + dy * dy;
+                if (distanceSquared < 0.01f) continue;
 
-                // Avoid division by zero (skip self-interaction or very close points)
-                if (distanceSquared < 0.01f) {
-                    continue;
-                }
-
-                // Apply Coulomb's law: E = k_e * q / r^2
                 float distance = sqrtf(distanceSquared);
-                if (distance > maxInfluenceRadius) {
-                    continue; // Ignore points outside of the influence radius
-                }
+                if (distance > maxInfluenceRadius) continue;
 
                 float electricFieldMagnitude = ke * newElectrons[i].charge / distanceSquared;
-
-                // Calculate the electric field components in x and y directions
                 float electricFieldX = electricFieldMagnitude * (dx / distance);
                 float electricFieldY = electricFieldMagnitude * (dy / distance);
 
                 int neighborIdx = neighborY * GRID_WIDTH + neighborX;
-
-                // Accumulate electric field in the new grid (affecting neighboring grid points)
                 newGrid[neighborIdx].Ex += electricFieldX;
                 newGrid[neighborIdx].Ey += electricFieldY;
-
-                // Update local charge density (assuming electron deposit some charge)
                 newGrid[neighborIdx].chargeDensity += newElectrons[i].charge / (distanceSquared);
             }
         }
 
-        // Step 1b: Apply Lorentz force to update electron velocity
+        // Update velocities based on fields
         int electronIdx = (int)newElectrons[i].posY * GRID_WIDTH + (int)newElectrons[i].posX;
-        // Get the local fields at the electron's position
         float Ex = newGrid[electronIdx].Ex;
         float Ey = newGrid[electronIdx].Ey;
         float Bz = newGrid[electronIdx].Bz;
 
-        // Lorentz force: F = q(E + v × B)
-        // Update velocity due to electric field: a_x = (q / m) * Ex, a_y = (q / m) * Ey
-        // For simplicity, assume mass m = 1
+        // Apply Lorentz force
         newElectrons[i].vx += (newElectrons[i].charge * Ex) * dt;
         newElectrons[i].vy += (newElectrons[i].charge * Ey) * dt;
 
-        // Update velocity due to magnetic field: |v_x'| = |v_y * Bz|, |v_y'| = |v_x * Bz|
-        float lorentzForceX = fabs(newElectrons[i].vy) * fabs(Bz); // Take absolute value for force calculation
-        float lorentzForceY = fabs(newElectrons[i].vx) * fabs(Bz); // Same for vy
+        // Calculate magnetic influence
+        float lorentzForceX = fabs(newElectrons[i].vy) * Bz;
+        float lorentzForceY = -fabs(newElectrons[i].vx) * Bz;
 
-        // Apply Lorentz force while preserving the original velocity signs
-        newElectrons[i].vx += (newElectrons[i].vx < 0 ? -lorentzForceX : lorentzForceX) * dt;
-        newElectrons[i].vy += (newElectrons[i].vy < 0 ? -lorentzForceY : lorentzForceY) * dt;
+        newElectrons[i].vx += copysign(lorentzForceX * dt, newElectrons[i].vx);
+        newElectrons[i].vy += copysign(lorentzForceY * dt, newElectrons[i].vy);
     }
 
-    // Step 2: Calculate electromagnetic field propagation using Maxwell's equations
+    // Step 2: Calculate electromagnetic field propagation with damping
     for (int y = 1; y < GRID_HEIGHT - 1; y++) {
         for (int x = 1; x < GRID_WIDTH - 1; x++) {
             int idx = y * GRID_WIDTH + x;
@@ -271,20 +306,63 @@ void handleVoidness(unsigned int *array, float dt, int numElectrons) {
             int idxLeft = y * GRID_WIDTH + (x - 1);
             int idxRight = y * GRID_WIDTH + (x + 1);
 
-            // Faraday's Law: ∇ × E = -∂B/∂t (updates electric field based on magnetic field)
-            float dBz_dx = (grid[idxRight].Bz - grid[idxLeft].Bz) / (2 * GRID_WIDTH);  // Approximate ∂Bz/∂x
-            float dBz_dy = (grid[idxUp].Bz - grid[idxDown].Bz) / (2 * GRID_WIDTH);     // Approximate ∂Bz/∂y
+            float dBz_dx = (grid[idxRight].Bz - grid[idxLeft].Bz) / (2 * GRID_WIDTH);
+            float dBz_dy = (grid[idxUp].Bz - grid[idxDown].Bz) / (2 * GRID_WIDTH);
 
-            newGrid[idx].Ex += dt * grid[idx].mu * dBz_dy;
-            newGrid[idx].Ey += dt * grid[idx].mu * (-dBz_dx);
+            newGrid[idx].Ex += dt * grid[idx].mu * dBz_dy - gamma * newGrid[idx].Ex;
+            newGrid[idx].Ey += dt * grid[idx].mu * (-dBz_dx) - gamma * newGrid[idx].Ey;
 
-            // Ampère's Law: ∇ × B = μ₀ (J + ε₀ ∂E/∂t) (updates magnetic field based on electric field)
-            float dEy_dx = (grid[idxRight].Ey - grid[idxLeft].Ey) / (2 * GRID_WIDTH);  // Approximate ∂Ey/∂x
-            float dEx_dy = (grid[idxUp].Ex - grid[idxDown].Ex) / (2 * GRID_WIDTH);     // Approximate ∂Ex/∂y
+            // Limit electric field values
+            if (fabs(newGrid[idx].Ex) > maxFieldMagnitude) {
+                newGrid[idx].Ex = copysign(maxFieldMagnitude, newGrid[idx].Ex);
+            }
+            if (fabs(newGrid[idx].Ey) > maxFieldMagnitude) {
+                newGrid[idx].Ey = copysign(maxFieldMagnitude, newGrid[idx].Ey);
+            }
 
-            newGrid[idx].Bz += dt * (dEy_dx - dEx_dy) / grid[idx].epsilon;
+            float dEy_dx = (grid[idxRight].Ey - grid[idxLeft].Ey) / (2 * GRID_WIDTH);
+            float dEx_dy = (grid[idxUp].Ex - grid[idxDown].Ex) / (2 * GRID_WIDTH);
+
+            newGrid[idx].Bz += dt * (grid[idx].epsilon * (dEy_dx - dEx_dy)) - eta * newGrid[idx].Bz;
+
+            // Limit magnetic field values
+            if (fabs(newGrid[idx].Bz) > maxFieldMagnitude) {
+                newGrid[idx].Bz = copysign(maxFieldMagnitude, newGrid[idx].Bz);
+            }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // copy updated value to electrons list
     for (int i = 0; i < numElectrons; i++) {

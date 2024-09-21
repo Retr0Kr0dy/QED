@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     int pause = 0;
 
 
-    float timeRatio = 1;
+    float timeRatio = 1.0f;
     int numElectrons = 0;
 
     SDL_Event event;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
     // Initialize the grid
     initializeVoidnessGrid(grid);
 
-    addElectrons(numElectrons, GRID_WIDTH/2,  GRID_HEIGHT/2, 1.0f, 0.0f, 0.0f, 5.0f);
+//    addElectrons(numElectrons, GRID_WIDTH/2,  GRID_HEIGHT/2, 1.0f, 0.0f, 0.0f, 5.0f);
 //    drawPotMir(pixels);
 
 
@@ -140,11 +140,12 @@ int main(int argc, char* argv[]) {
                         addElectrons(numElectrons+1, 1.0f * (rand()%GRID_WIDTH),  1.0f * (rand()%GRID_HEIGHT), 0.70f, 1.0f, 1.0f, 0.0f);
                         numElectrons++;
                         break;
-                    case SDLK_e:
-                        applyInitialPerturbation(&electrons[0], 1.0f, 1.0f);
+                    case SDLK_z:
+                        addElectrons(numElectrons+1, 1.0f * (rand()%GRID_WIDTH),  1.0f * (rand()%GRID_HEIGHT), -0.70f, 1.0f, 1.0f, 0.0f);
+                        numElectrons++;
                         break;
                     case SDLK_f:
-                        applyPerturbation(grid,GRID_WIDTH/3,GRID_HEIGHT/3,0.99f,0.0f);
+                        applyNarrowedPerturbation(grid,rand()%GRID_WIDTH,rand()%GRID_HEIGHT,1.0f,1.0f,1.0f);
                         break;
                     case SDLK_g:
                         applyPerturbation(grid,(GRID_WIDTH/2)+5,(GRID_HEIGHT/2)+3,0.0f,0.99f);
@@ -180,7 +181,7 @@ int main(int argc, char* argv[]) {
 
 
 
-
+printf ("Ex:%.2f Ey:%.2f Bz:%.2f ep:%.2f mu:%.2f chde:%.2f cudeX,Y:%.2f:%.2f\n",grid[24100].Ex, grid[24100].Ey, grid[24100].Bz, grid[24100].epsilon, grid[24100].mu, grid[24100].chargeDensity, grid[24100].currentDensityX, grid[24100].currentDensityY);
 
         // Creating temp buffer for rendring
         unsigned int* tempPixels = (unsigned int*)malloc(GRID_WIDTH * GRID_HEIGHT * sizeof(unsigned int));

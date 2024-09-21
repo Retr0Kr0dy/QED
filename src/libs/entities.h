@@ -123,9 +123,11 @@ unsigned int interpolateColor(float value, float minValue, float maxValue, unsig
 
 
 
-void applyInitialPerturbation(Electron *electron, float initialVx, float initialVy) {
-    electron->vx = initialVx;
-    electron->vy = initialVy;
+void applyNarrowedPerturbation(Voidness* grid, float posX, float posY, float Ex, float Ey, float Bz) {
+    int idx = posY * GRID_WIDTH + posX;
+    grid[idx].Ex = Ex;
+    grid[idx].Ey = Ey;
+    grid[idx].Bz = Bz;
 }
 
 
