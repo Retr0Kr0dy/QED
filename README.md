@@ -5,7 +5,7 @@ Studuying QED and simulating things
 SDL x OpenGL engine (based on mire project).
 
 
-![Alt text](https://github.com/Retr0Kr0dy/QED/blob/main/demo.gif)
+![Alt text](https://github.com/Retr0Kr0dy/QED/blob/main/media/png/demo.png)
 
 
 ## Requirements
@@ -29,14 +29,18 @@ make && ./BQEDPS
 |Key|Action|
 |-|-|
 |f1|Enable/disable debug info.|
+|f2|play/pause simulation.|
 |q|Quit.|
-|f|Create noise.|
-|g|Create a charged circle (1.0f) at random position.|
-|u|Increase damping factor.|
-|j|Decrease damping factor.|
-|i|Increase influence factor.|
-|k|Decrease influence factor.|
-|o|Increase total surrounding.|
-|l|Decrease total surrounding.|
-|p|Increase valid neighbors.|
-|m|Decrease valid neighbors.|
+
+
+## What ?
+
+Electro magnetic fields propagation study. (Interaction between electric and magnetic fields as describe by Maxwell's equations.)
+
+## How ?
+
+Using Maxwell's equations such as describe [here](https://en.wikipedia.org/wiki/Maxwell%27s_equations)
+
+## Why ?
+
+Deep understanding of radio signals, light propagtaion, general physics.
